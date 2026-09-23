@@ -1,6 +1,14 @@
 # dArkOS RK2023 → PowKiddy X35H / X35S - **AUTOMATED BUILDING - ENGLISH**
 
-Modifies the official **RK2023** image of [dArkOS v06072026](https://github.com/christianhaitian/dArkOS/releases/tag/v06072026) to a version that can boot on the **PowKiddy X35H / X35S**, with automated building, GitHub Release publishing, and Baidu Netdisk uploading via GitHub Actions.
+Modifies the official **RK2023** image of [dArkOS v08272026](https://github.com/christianhaitian/dArkOS/releases/tag/v08272026) to a version that can boot on the **PowKiddy X35H / X35S**, with automated building, GitHub Release publishing, and Baidu Netdisk uploading via GitHub Actions.
+
+To build a single variant only:
+**WSL/Linux**
+sudo bash build-all.sh --variant X35S --skip-compress
+OR
+sudo bash build-all.sh --variant X35H --skip-compress
+
+
 
 ## Modifications
 
@@ -84,7 +92,9 @@ The raw `.img` file will be deleted after compression; Release / Baidu Netdisk w
 
 To build a single variant only:
 
-sudo bash scripts/build-all.sh --variant X35H
+sudo bash build-all.sh --variant X35S --skip-compress
+OR
+sudo bash build-all.sh --variant X35H --skip-compress
 
 ## Flashing U-Boot Manually (Optional)
 
