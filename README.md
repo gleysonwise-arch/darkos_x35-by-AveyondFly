@@ -1,164 +1,155 @@
-# dArkOS RK2023 → PowKiddy X35H / X35S
+# dArkOS RK2023 → PowKiddy X35H / X35S - **AUTOMATED BUILDING - ENGLISH**
 
-将 [dArkOS v06072026](https://github.com/christianhaitian/dArkOS/releases/tag/v06072026) 的 **RK2023** 官方镜像 mod 为可在 **PowKiddy X35H / X35S** 上启动的版本，并通过 GitHub Actions 自动构建、发布 Release、上传百度网盘。
+Modifies the official **RK2023** image of [dArkOS v06072026](https://github.com/christianhaitian/dArkOS/releases/tag/v06072026) to a version that can boot on the **PowKiddy X35H / X35S**, with automated building, GitHub Release publishing, and Baidu Netdisk uploading via GitHub Actions.
 
-## 修改内容
+## Modifications
 
-| 组件 | 文件 | 说明 |
+| Component | File | Description |
 | --- | --- | --- |
-| U-Boot | `RK3566-Specific_uboot.bin` | 写入镜像 sector 64（与 `flash-uboot.sh` 一致） |
-| 内核 | `Image` | 替换 boot 分区的 `/Image` |
-| DTB | `rk3566-powkiddy-x35h.dtb` / `rk3566-powkiddy-x35s.dtb` | 复制到 boot 分区根目录 |
-| extlinux | `overlay/extlinux/*.extlinux.conf` | 整文件替换，APPEND 相对上游有三处改动（见下） |
-| rootfs | `overlay/rootfs/` | s2idle、设备标识、音频与模拟器恢复脚本（见下） |
+| U-Boot | `RK3566-Specific_uboot.bin` | Written to image sector 64 (consistent with `flash-uboot.sh`) |
+| Kernel | `Image` | Replaces `/Image` in the boot partition |
+| DTB | `rk3566-powkiddy-x35h.dtb` / `rk3566-powkiddy-x35s.dtb` | Copied to the root directory of the boot partition |
+| extlinux | `overlay/extlinux/*.extlinux.conf` | Replaces the entire file; contains three changes in APPEND relative to upstream (see below) |
+| rootfs | `overlay/rootfs/` | s2idle, device identifier, audio, and emulator recovery scripts (see below) |
 
-### extlinux.conf APPEND 改动（相对上游 RK2023）
+### extlinux.conf APPEND Changes (Relative to Upstream RK2023)
 
-| 项 | 上游 | 本 mod |
+| Item | Upstream | This Mod |
 | --- | --- | --- |
-| LCD 控制台 | `console=tty1` | **去掉** |
-| 内核日志级别 | `loglevel=5` | **去掉** |
-| 串口控制台 | 无 | `console=ttyS2,1500000n8`（日志走 UART，不占 LCD） |
+| LCD Console | `console=tty1` | **Removed** |
+| Kernel Log Level | `loglevel=5` | **Removed** |
+| Serial Console | None | `console=ttyS2,1500000n8` (Logs routed via UART, avoiding LCD occupation) |
 
-另将 `FDT` 改为对应 X35H / X35S 的 dtb。模板见 `overlay/extlinux/`。
+Additionally, `FDT` is changed to the corresponding DTB for X35H / X35S. Templates can be found under `overlay/extlinux/`.
 
-### rootfs 改动
+### rootfs Changes
 
-| 路径 | 说明 |
+| Path | Description |
 | --- | --- |
-| `/etc/systemd/sleep.conf.d/s2idle.conf` | 强制 `MemorySleepMode=s2idle`、`SuspendState=mem`（本板 deep sleep 无法唤醒） |
-| `/home/ark/.config/.DEVICE` | 设为 `X35H` / `X35S`（构建时按变体写入；不再沿用上游 `RK2023`） |
-| `/usr/local/bin/spktoggle.sh` | X35 静音恢复 / 扬声器路径用 **SPK**（RK2023/RGB30 仍用历史 HP 逻辑） |
-| root crontab | **删除** `@reboot spktoggle.sh`（开机时若已是 SPK 会被它切成 HP→喇叭无声） |
-| `/usr/local/bin/Fix Audio.sh` | 识别 X35H/X35S，修复音频时设 **SPK** |
-| `/opt/system/Advanced/Fix Audio.sh` | 同上 |
-| `/usr/local/bin/headphone-audio-switch.sh` | 优先读 extcon `HEADPHONE=`，回退 dmesg |
-| `Restore Default {Drastic,GZdoom,LZdoom,PPSSPP}*.sh` | X35 使用 rk2023 配置档（同为 640×480） |
+| `/etc/systemd/sleep.conf.d/s2idle.conf` | Forces `MemorySleepMode=s2idle` and `SuspendState=mem` (This board cannot wake up from deep sleep) |
+| `/home/ark/.config/.DEVICE` | Set to `X35H` / `X35S` (Written during build according to the variant; no longer inherits upstream `RK2023`) |
+| `/usr/local/bin/spktoggle.sh` | X35 silence recovery / Speaker path set to **SPK** (RK2023/RGB30 still use historical HP logic) |
+| root crontab | **Deletes** `@reboot spktoggle.sh` (If already in SPK mode at boot, this script would toggle it to HP → speaker remains silent) |
+| `/usr/local/bin/Fix Audio.sh` | Identifies X35H/X35S and sets **SPK** when repairing audio |
+| `/opt/system/Advanced/Fix Audio.sh` | Same as above |
+| `/usr/local/bin/headphone-audio-switch.sh` | Reads extcon `HEADPHONE=` first, then falls back to dmesg |
+| `Restore Default {Drastic,GZdoom,LZdoom,PPSSPP}*.sh` | X35 uses the RK2023 configuration files (both are 640×480) |
 
-模板位于 `overlay/rootfs/`，构建时挂载 rootfs 分区（p4，btrfs）后复制进去；`.DEVICE` 由 `mod-image.sh` 按变体覆盖。
+Templates are located in `overlay/rootfs/` and copied over during the build process after mounting the rootfs partition (p4, btrfs); `.DEVICE` is overwritten by `mod-image.sh` based on the specified variant.
 
-> **说明：** 上游把 RK2023/RGB30 的「扬声器」写成 `Playback Path=HP`。X35 上 HP 会关掉 `spk-ctl`，喇叭无声，必须用 SPK。
+> **Note:** Upstream incorrectly sets the "speaker" for RK2023/RGB30 to `Playback Path=HP`. On the X35, HP turns off `spk-ctl`, resulting in no sound from the speaker; **SPK** is required.
 
-X35H 与 X35S 硬件相同，仅屏幕方向不同，因此分别输出两个镜像。
+The X35H and X35S share the same hardware and differ only in screen orientation, so two separate images are output.
 
-## 目录结构
+## Directory Structure
 
-```
 .
-├── config.env                 # 上游版本、输出命名、变体配置
-├── flash-uboot.sh             # U-Boot 刷写（本地/CI 共用）
-├── Image                      # 自定义内核
-├── RK3566-Specific_uboot.bin  # 自定义 U-Boot
+├── config.env                 # Upstream version, output naming, variant configurations
+├── flash-uboot.sh             # U-Boot flashing script (shared by local / CI)
+├── Image                      # Custom kernel
+├── RK3566-Specific_uboot.bin  # Custom U-Boot
 ├── rk3566-powkiddy-x35h.dtb
 ├── rk3566-powkiddy-x35s.dtb
 ├── overlay/
-│   ├── extlinux/              # extlinux.conf 模板
+│   ├── extlinux/              # extlinux.conf templates
 │   │   ├── X35H.extlinux.conf
 │   │   └── X35S.extlinux.conf
-│   └── rootfs/                # rootfs 文件覆盖（保持路径一致）
+│   └── rootfs/                # rootfs file overrides (maintaining identical paths)
 │       ├── etc/systemd/sleep.conf.d/s2idle.conf
 │       ├── home/ark/.config/.DEVICE
 │       ├── usr/local/bin/{spktoggle,Fix Audio,headphone-audio-switch}.sh
 │       └── opt/system/Advanced/{Fix Audio,Restore Default *}.sh
 └── scripts/
-    ├── download-base.sh       # 下载并解压上游 RK2023 镜像
-    ├── mod-image.sh           # 单变体 mod（uboot + kernel + dtb）
-    ├── build-all.sh           # 构建全部变体并 7z 分卷
-    └── upload-baidu.sh        # 百度网盘上传
-```
+    ├── download-base.sh       # Downloads and extracts upstream RK2023 image
+    ├── mod-image.sh           # Single variant mod (uboot + kernel + dtb)
+    ├── build-all.sh           # Builds all variants and compresses into 7z multi-volume archives
+    └── upload-baidu.sh        # Uploads to Baidu Netdisk
 
-## 本地构建
+## Local Build
 
-依赖：`p7zip-full`、`curl`、`sgdisk`（`gdisk` 包）、`dosfstools`、`btrfs-progs`。
+Dependencies: `p7zip-full`, `curl`, `sgdisk` (`gdisk` package), `dosfstools`, `btrfs-progs`.
 
-```bash
 sudo apt-get install -y p7zip-full curl gdisk dosfstools btrfs-progs
 sudo bash scripts/build-all.sh
-```
 
-产物在 `dist/`（每个变体约 3 个分卷，单卷 < 2GiB，可上传 GitHub Release）：
+Build outputs are saved in `dist/` (approx. 3 split volumes per variant, each volume < 2GiB, ready for GitHub Release upload):
 
 - `dArkOS_RK2023_X35H_trixie_06082026.img.7z.001` … `.002` …
 - `dArkOS_RK2023_X35S_trixie_06082026.img.7z.001` … `.002` …
 
-压缩完成后会删除 raw `.img`，Release / 百度网盘只发布 `.7z.*` 分卷。
+The raw `.img` file will be deleted after compression; Release / Baidu Netdisk will only distribute the `.7z.*` split archives.
 
-仅构建某一变体：
+To build a single variant only:
 
-```bash
 sudo bash scripts/build-all.sh --variant X35H
-```
 
-## 手动刷 U-Boot（可选）
+## Flashing U-Boot Manually (Optional)
 
-若已有 dArkOS RK2023 镜像或 SD 卡，可单独刷 U-Boot：
+If you already have a dArkOS RK2023 image or SD card, you can flash U-Boot separately:
 
-```bash
-sudo ./flash-uboot.sh /dev/sdX          # SD 卡
-sudo ./flash-uboot.sh darkos-rk2023.img  # 镜像文件
-```
+sudo ./flash-uboot.sh /dev/sdX          # SD Card
+sudo ./flash-uboot.sh darkos-rk2023.img  # Image file
 
 ## GitHub Actions
 
-工作流：`.github/workflows/build-release.yml`
+Workflow file: `.github/workflows/build-release.yml`
 
-### 触发方式
+### Trigger Methods
 
-1. **打 tag 发布**（推荐）  
-   ```bash
+1. **Tag & Push** (Recommended)  
    git tag v1.0.0
    git push origin v1.0.0
-   ```
-2. **手动运行**：Actions → Build and Release → Run workflow
+2. **Manual Execution**: Actions → Build and Release → Run workflow
 
-### Actions Artifacts（手动构建下载）
+### Actions Artifacts (Manual Build & Download)
 
-`upload-artifact` 会把文件**再打成 zip** 上传到 Actions；页面上每个 upload 步骤 = **1 个** artifact 条目，这是 GitHub 机制，不代表分卷失败。
+`upload-artifact` will **zip the files again** before uploading to Actions; every upload step on the page equals **1 artifact** entry. This is standard GitHub behavior and does not mean the split archive failed.
 
-下载 artifact zip 后解压，才能看到 `.7z.001`、`.7z.002` 等分卷。
+Download and extract the artifact zip file to access the underlying `.7z.001`, `.7z.002`, etc., split archives.
 
-| Artifact 名 | 内容 |
+| Artifact Name | Content |
 | --- | --- |
-| `darkos-x35h-7z` | X35H 全部分卷 |
-| `darkos-x35s-7z` | X35S 全部分卷 |
-| `release-notes` | 发布说明 |
+| `darkos-x35h-7z` | All X35H split volumes |
+| `darkos-x35s-7z` | All X35S split volumes |
+| `release-notes` | Release Notice |
 
-若要每个分卷**单独列出**供下载，请打 tag 发 **GitHub Release**（单附件 < 2GiB）。
+If you want each volume **listed separately** for direct download, create a tag and publish a **GitHub Release** (single file attachment < 2GiB).
 
-### 仓库 Secrets（百度网盘）
+### Repository Secrets (Baidu Netdisk)
 
-| Secret | 说明 |
+| Secret | Description |
 | --- | --- |
-| `BDUSS` | 百度账号 BDUSS Cookie |
-| `STOKEN` | 百度账号 STOKEN Cookie |
+| `BDUSS` | Baidu account BDUSS Cookie |
+| `STOKEN` | Baidu account STOKEN Cookie |
 
-在浏览器登录 [pan.baidu.com](https://pan.baidu.com) 后，从 Cookie 中获取（勿泄露）。
+Obtain these from your browser cookies after logging in at [pan.baidu.com](https://pan.baidu.com) (Do not leak these).
 
-### 仓库 Variables（可选）
+### Repository Variables (Optional)
 
-| Variable | 默认值 | 说明 |
+| Variable | Default Value | Description |
 | --- | --- | --- |
-| `BAIDU_REMOTE_DIR` | `/Apps/dArkOS-X35/` | 网盘根目录（其下自动建日期子目录） |
+| `BAIDU_REMOTE_DIR` | `/Apps/dArkOS-X35/` | Root directory on Baidu Netdisk (automatically creates date subdirectories underneath) |
 
-实际上传路径：`/Apps/dArkOS-X35/YYYY-MM-DD/`（日期按 `Asia/Shanghai`）。  
-可选 Variable `BAIDU_DATE` 覆盖日期文件夹；本地可用 `BAIDU_DATE=2026-07-19` 指定。
-| `DARKOS_RELEASE` | `v06072026` | Release 说明中引用的上游版本 |
+Actual upload path: `/Apps/dArkOS-X35/YYYY-MM-DD/` (Date set to `Asia/Shanghai`).  
+Optional variable `BAIDU_DATE` overrides the date folder; locally, you can specify `BAIDU_DATE=2026-07-19`.
+| `DARKOS_RELEASE` | `v06072026` | Upstream release version referenced in the Release Notes |
 
-未配置 `BDUSS` / `STOKEN` 时，构建与 GitHub Release 仍会执行，仅跳过百度上传。
+If `BDUSS` / `STOKEN` are not configured, builds and GitHub Releases will still execute, skipping only the Baidu upload step.
 
-## 更新 mod 资源
+## Updating Mod Resources
 
-1. 替换仓库根目录下的 `Image`、`RK3566-Specific_uboot.bin` 或 dtb 文件。
-2. 若上游 dArkOS 版本变更，编辑 `config.env` 中的 `DARKOS_RELEASE` 与 `BASE_IMAGE_BASENAME`。
-3. 打新 tag 触发 CI，或本地 `sudo bash scripts/build-all.sh` 验证。
+1. Replace `Image`, `RK3566-Specific_uboot.bin`, or DTB files in the repository root directory.
+2. If the upstream dArkOS version changes, update `DARKOS_RELEASE` and `BASE_IMAGE_BASENAME` in `config.env`.
+3. Push a new tag to trigger CI, or run `sudo bash scripts/build-all.sh` locally to verify.
 
-## 刷机
+## Flashing Instructions
 
-1. 下载对应变体（x35h / x35s）的全部 `.7z.00x` 分卷。
-2. 用 7-Zip 打开 `.001` 解压得到 `.img`。
-3. 写入 SD 卡（Rufus、balenaEtcher、`dd` 等）。
+1. Download all `.7z.00x` volumes for your target variant (`x35h` / `x35s`).
+2. Open `.001` with 7-Zip and extract the `.img` file.
+3. Write to an SD card using Rufus, balenaEtcher, `dd`, etc.
 
-## 许可与声明
+## Licenses and Disclaimers
 
-- 上游 dArkOS 版权归 [christianhaitian/dArkOS](https://github.com/christianhaitian/dArkOS) 所有。
-- 本仓库仅提供镜像 mod 脚本与自动化流程；设备变砖风险自负，请先备份。
+- Update dAarkOS to POWKIDDY X35S/X35H, thank you to [AveyondFly](https://github-com.translate.goog/AveyondFly/darkos_x35)
+- Upstream dArkOS copyright belongs to [christianhaitian/dArkOS](https://github.com/christianhaitian/dArkOS).
+- This repository provides only image modding scripts and automation workflows; perform at your own risk. Please back up your data first.
