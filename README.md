@@ -3,9 +3,13 @@
 Modifies the official **RK2023** image of [dArkOS v08272026](https://github.com/christianhaitian/dArkOS/releases/tag/v08272026) to a version that can boot on the **PowKiddy X35H / X35S**, with automated building, GitHub Release publishing, and Baidu Netdisk uploading via GitHub Actions.
 
 To build a single variant only:
+
 **WSL/Linux**
+
 sudo bash build-all.sh --variant X35S --skip-compress
+
 OR
+
 sudo bash build-all.sh --variant X35H --skip-compress
 
 
