@@ -43,9 +43,11 @@ The X35H and X35S share the same hardware and differ only in screen orientation,
 
 ## Directory Structure
 
+```
 .
-├── config.env                 # Upstream version, output naming, variant configurations
-├── flash-uboot.sh             # U-Boot flashing script (shared by local / CI)
+.
+├── config.env                 # Upstream version, output naming, variant configs
+├── flash-uboot.sh             # U-Boot flashing (shared by local/CI)
 ├── Image                      # Custom kernel
 ├── RK3566-Specific_uboot.bin  # Custom U-Boot
 ├── rk3566-powkiddy-x35h.dtb
@@ -54,16 +56,17 @@ The X35H and X35S share the same hardware and differ only in screen orientation,
 │   ├── extlinux/              # extlinux.conf templates
 │   │   ├── X35H.extlinux.conf
 │   │   └── X35S.extlinux.conf
-│   └── rootfs/                # rootfs file overrides (maintaining identical paths)
+│   └── rootfs/                # rootfs file overlays (maintaining path consistency)
 │       ├── etc/systemd/sleep.conf.d/s2idle.conf
 │       ├── home/ark/.config/.DEVICE
 │       ├── usr/local/bin/{spktoggle,Fix Audio,headphone-audio-switch}.sh
 │       └── opt/system/Advanced/{Fix Audio,Restore Default *}.sh
 └── scripts/
-    ├── download-base.sh       # Downloads and extracts upstream RK2023 image
-    ├── mod-image.sh           # Single variant mod (uboot + kernel + dtb)
-    ├── build-all.sh           # Builds all variants and compresses into 7z multi-volume archives
-    └── upload-baidu.sh        # Uploads to Baidu Netdisk
+├── download-base.sh       # Download and extract upstream RK2023 image
+├── mod-image.sh           # Single-variant mod (uboot + kernel + dtb)
+├── build-all.sh           # Build all variants and split with 7z
+└── upload-baidu.sh        # Upload to Baidu Netdisk
+```
 
 ## Local Build
 
