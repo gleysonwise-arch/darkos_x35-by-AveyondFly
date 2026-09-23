@@ -153,6 +153,6 @@ If `BDUSS` / `STOKEN` are not configured, builds and GitHub Releases will still 
 
 ## Licenses and Disclaimers
 
-- Update dAarkOS to POWKIDDY X35S/X35H, thank you to [AveyondFly](https://github-com.translate.goog/AveyondFly/darkos_x35)
+- Update dArkOS to POWKIDDY X35S/X35H, thank you to [AveyondFly](https://github-com.translate.goog/AveyondFly/darkos_x35)
 - Upstream dArkOS copyright belongs to [christianhaitian/dArkOS](https://github.com/christianhaitian/dArkOS).
 - This repository provides only image modding scripts and automation workflows; perform at your own risk. Please back up your data first.
